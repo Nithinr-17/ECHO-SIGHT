@@ -1,0 +1,70 @@
+
+#include <SoftwareSerial.h>
+#include <DFRobotDFPlayerMini.h>
+
+// Pin Definitions
+const int trigPin = 9;
+const int echoPin = 10;
+const int thresholdDistance = 20;  // Distance threshold in cm
+
+// DFPlayer Mini setup
+SoftwareSerial mySoftwareSerial(11, 12); // RX, TX for DFPlayer Mini
+DFRobotDFPlayerMini myDFPlayer;
+
+// Variables for the ultrasonic sensor
+long duration;
+int distance;
+
+void setup() {
+  // Start the serial communication for debugging
+  Serial.begin(9600);
+  
+  // Set up the ultrasonic sensor pins
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  
+  // Start the SoftwareSerial communication for DFPlayer Mini
+  mySoftwareSerial.begin(9600);
+  
+  // Initialize DFPlayer Mini
+  if (!myDFPlayer.begin(mySoftwareSerial)) {
+    Serial.println("DFPlayer Mini not detected!");
+    while (true); // Stop the program if DFPlayer is not detected
+  }
+  Serial.println("DFPlayer Mini ready.");
+
+  // Set volume (range 0-30)
+  myDFPlayer.volume(20);  // Set the volume to 20 (can adjust this value)
+}
+
+void loop() {
+  // Trigger the ultrasonic sensor to start measuring distance
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Measure the pulse duration (time taken for the pulse to return)
+  duration = pulseIn(echoPin, HIGH);
+
+  // Calculate the distance (in cm)
+  distance = duration * 0.034 / 2;
+
+  // Print the distance (optional, for debugging)
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // If the distance is less than or equal to the threshold, play an alert sound
+  if (distance <= thresholdDistance) {
+    // Play an audio file (e.g., "Obstacle detected")
+    myDFPlayer.play(1);  // Play track 0001.mp3
+  } else {
+    // Play a "clear" sound or no sound if the path is clear
+    myDFPlayer.play(2);  // Play track 0002.mp3, you can adjust this as needed
+  }
+
+  delay(100);  // Delay to avoid flooding with signals
+}
+
